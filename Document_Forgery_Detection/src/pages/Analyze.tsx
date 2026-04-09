@@ -8,7 +8,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "application/pdf"];
-const API_URL = "http://localhost:8000";
+const API_URL = "/api";
 
 const STAGE_LABELS = [
   "Running Error Level Analysis...",
