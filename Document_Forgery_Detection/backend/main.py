@@ -35,11 +35,13 @@ MAX_FILE_SIZE  = 10 * 1024 * 1024  # 10 MB
 
 
 @app.get("/health")
+@app.get("/api/health")
 def health():
     return {"status": "ok"}
 
 
 @app.post("/verify-document")
+@app.post("/api/verify-document")
 async def verify_document(file: UploadFile = File(...)):
     """
     Accepts a JPG or PNG image and returns:
