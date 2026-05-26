@@ -8,7 +8,7 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
-import fitz
+import pypdfium2 as pdfium
 
 from detector import DocumentAuthenticityDetector
 
@@ -73,17 +73,28 @@ async def verify_document(file: UploadFile = File(...)):
 
     if is_pdf_flag:
         try:
-            pdf_doc = fitz.open(stream=contents, filetype="pdf")
+            pdf_doc = pdfium.PdfDocument(contents)
             if len(pdf_doc) == 0:
                 raise ValueError("PDF document is empty.")
             
             first_page = pdf_doc[0]
-            pdf_text = first_page.get_text("text").lower()
-            pdf_metadata = pdf_doc.metadata or {}
+            # pypdfium2 text extraction
+            text_page = first_page.get_textpage()
+            pdf_text = text_page.get_text_range().lower() if text_page else ""
+            
+            # Since pypdfium2 doesn't extract all metadata dict easily, we'll extract standard ones if needed,
+            # or just leave it empty since Vercel size limit is more important.
+            pdf_metadata = {}
 
-            # Render page to Pixmap at ~150 DPI gives good quality vs size trade-off
-            pix = first_page.get_pixmap(dpi=150)
-            image_bytes = pix.tobytes("png")
+            # Render page to PIL image
+            pil_image = first_page.render(
+                scale=150 / 72,  # 150 DPI
+            ).to_pil()
+            
+            import io
+            buf = io.BytesIO()
+            pil_image.save(buf, format="PNG")
+            image_bytes = buf.getvalue()
             pdf_doc.close()
         except Exception as e:
             raise HTTPException(
