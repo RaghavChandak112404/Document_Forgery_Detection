@@ -22,7 +22,7 @@
     }
   ],
   "functions": {
-    "api/**/*.py": {
+    "api/index.py": {
       "includeFiles": "backend/**"
     }
   }
