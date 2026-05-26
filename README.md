@@ -211,15 +211,6 @@ Document_Forgery_Detection/
 
 > Evaluated on a 20% holdout test set combining CASIA v2.0, Columbia, and custom document data.
 
----
-
-## 📸 Screenshots
-
-> _Add screenshots of your UI here by placing images in a `/screenshots` folder and updating the paths below._
-
-| Upload Page | Results Page |
-|---|---|
-| ![Upload](screenshots/upload.png) | ![Results](screenshots/results.png) |
 
 ---
 
