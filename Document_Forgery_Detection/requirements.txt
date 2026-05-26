@@ -1,7 +1,6 @@
 fastapi>=0.111.0
 uvicorn>=0.29.0
 python-multipart>=0.0.9
-opencv-python-headless>=4.9.0.80
+opencv-python-headless==4.6.0.66
 numpy>=1.26.4,<2.0.0
-Pillow>=10.3.0
 pypdfium2>=4.30.0

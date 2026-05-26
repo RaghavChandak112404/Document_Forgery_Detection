@@ -25,7 +25,6 @@ import os
 
 import cv2
 import numpy as np
-from PIL import Image
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -155,14 +154,14 @@ class DocumentAuthenticityDetector:
         if getattr(self, "is_pdf", False):
             return 100.0, _to_b64(np.zeros_like(img_bgr)), ["Digital PDF — ELA not applicable"]
         try:
-            pil_orig = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-            buf = io.BytesIO()
-            pil_orig.save(buf, "JPEG", quality=95)
-            buf.seek(0)
-            pil_recomp = Image.open(buf).convert("RGB")
+            # OpenCV equivalent of JPEG recompression
+            # We already have img_bgr which is decoded.
+            encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 95]
+            _, encoded_img = cv2.imencode('.jpg', img_bgr, encode_param)
+            recomp_bgr = cv2.imdecode(encoded_img, cv2.IMREAD_COLOR)
 
-            orig_arr   = np.array(pil_orig,   dtype=np.float32)
-            recomp_arr = np.array(pil_recomp, dtype=np.float32)
+            orig_arr   = img_bgr.astype(np.float32)
+            recomp_arr = recomp_bgr.astype(np.float32)
             ela_map    = np.abs(orig_arr - recomp_arr)
 
             mean_err      = ela_map.mean()
@@ -488,16 +487,12 @@ class DocumentAuthenticityDetector:
                 flags.append("Strong colour jump at face boundary — face likely pasted from different image")
                 cv2.rectangle(vis, (fx-pad, fy-pad), (fx+fw+pad, fy+fh+pad), (0, 0, 255), 1)
 
-            # Sub-check D: ELA boundary ring
             try:
-                pil_img = Image.fromarray(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB))
-                buf = io.BytesIO()
-                pil_img.save(buf, "JPEG", quality=95)
-                buf.seek(0)
-                ela_map = np.abs(
-                    np.array(pil_img, dtype=np.float32) -
-                    np.array(Image.open(buf).convert("RGB"), dtype=np.float32)
-                ).mean(axis=2)
+                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 95]
+                _, encoded_img = cv2.imencode('.jpg', img_bgr, encode_param)
+                recomp_bgr = cv2.imdecode(encoded_img, cv2.IMREAD_COLOR)
+                
+                ela_map = np.abs(img_bgr.astype(np.float32) - recomp_bgr.astype(np.float32)).mean(axis=2)
 
                 bw = max(3, fw // 10)
                 border_mask = np.zeros_like(ela_map, dtype=bool)

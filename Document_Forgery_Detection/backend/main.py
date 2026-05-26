@@ -86,15 +86,22 @@ async def verify_document(file: UploadFile = File(...)):
             # or just leave it empty since Vercel size limit is more important.
             pdf_metadata = {}
 
-            # Render page to PIL image
-            pil_image = first_page.render(
+            # Render page to numpy array
+            bitmap = first_page.render(
                 scale=150 / 72,  # 150 DPI
-            ).to_pil()
+            )
+            np_img = bitmap.to_numpy()
             
-            import io
-            buf = io.BytesIO()
-            pil_image.save(buf, format="PNG")
-            image_bytes = buf.getvalue()
+            import cv2
+            if len(np_img.shape) == 3 and np_img.shape[2] == 4:
+                bgr_img = cv2.cvtColor(np_img, cv2.COLOR_RGBA2BGR)
+            elif len(np_img.shape) == 3 and np_img.shape[2] == 3:
+                bgr_img = cv2.cvtColor(np_img, cv2.COLOR_RGB2BGR)
+            else:
+                bgr_img = np_img
+
+            _, encoded_img = cv2.imencode('.png', bgr_img)
+            image_bytes = encoded_img.tobytes()
             pdf_doc.close()
         except Exception as e:
             raise HTTPException(
